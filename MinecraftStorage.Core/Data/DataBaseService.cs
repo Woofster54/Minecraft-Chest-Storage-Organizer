@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Data.Sqlite;
-using Chest_Storage_Organizer.Models;
+using MinecraftStorage.Core.Models;
 
-namespace Chest_Storage_Organizer.Data
+namespace MinecraftStorage.Core.Data
 {
     public class DataBaseService
     {
