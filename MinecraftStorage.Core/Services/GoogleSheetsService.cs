@@ -3,6 +3,7 @@ using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using MinecraftStorage.Core.Models;
+using MinecraftStorage.Core.Helpers;
 
 namespace MinecraftStorage.Core.Services
 {
@@ -16,8 +17,36 @@ namespace MinecraftStorage.Core.Services
             _credentialPath = credentialPath;
             _spreadsheetId = spreadsheetId;
         }
+        private void EnsureSheetExists(SheetsService service, string sheetName)
+        {
+            var spreadsheet = service.Spreadsheets.Get(_spreadsheetId).Execute();
 
-        public void UpdateSheet(List<ChestItemRecord> records)
+            if (spreadsheet.Sheets.Any(s => s.Properties.Title == sheetName))
+                return;
+
+            var addSheetRequest = new AddSheetRequest
+            {
+                Properties = new SheetProperties
+                {
+                    Title = sheetName
+                }
+            };
+
+            var batchRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = new List<Request>
+        {
+            new Request { AddSheet = addSheetRequest }
+        }
+            };
+
+            service.Spreadsheets.BatchUpdate(batchRequest, _spreadsheetId).Execute();
+        }
+
+        public void UpdateSheet(List<ChestItemRecord> records,
+    Dictionary<string, int> itemTotals,
+    List<string> lowPriorityItems,
+    List<string> changes)
         {
             var credential = GoogleCredential.FromFile(_credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -131,13 +160,73 @@ for (int i = 0; i < grouped.Count; i++)
     });
 }
 
-var batchUpdate = new BatchUpdateSpreadsheetRequest
-{
-    Requests = requests
-};
+            if (requests.Count > 0)
+            {
+                var batchRequest = new BatchUpdateSpreadsheetRequest
+                {
+                    Requests = requests
+                };
 
-service.Spreadsheets.BatchUpdate(batchUpdate, _spreadsheetId).Execute();
+                service.Spreadsheets.BatchUpdate(batchRequest, _spreadsheetId).Execute();
+            }
+            EnsureSheetExists(service, "Analytics");
+            var analyticsValues = new List<IList<object>>();
 
+            analyticsValues.Add(new List<object> { "Last Scan", DateTime.Now.ToString() });
+            analyticsValues.Add(new List<object> { "Total Unique Items", itemTotals.Count });
+            analyticsValues.Add(new List<object> { "Total Item Count", itemTotals.Sum(x => x.Value) });
+            analyticsValues.Add(new List<object> { "" });
+
+            analyticsValues.Add(new List<object> { "Top 5 Items" });
+
+            foreach (var top in itemTotals
+                .OrderByDescending(x => x.Value)
+                .Take(5))
+            {
+                analyticsValues.Add(new List<object>
+    {
+        ItemNameFormatter.Format(top.Key),
+        top.Value
+    });
+            }
+
+            analyticsValues.Add(new List<object> { "" });
+            analyticsValues.Add(new List<object> { "Low Priority Items" });
+
+            foreach (var low in lowPriorityItems)
+            {
+                analyticsValues.Add(new List<object> { low });
+            }
+
+            analyticsValues.Add(new List<object> { "" });
+            analyticsValues.Add(new List<object> { "Inventory Changes" });
+
+            foreach (var change in changes)
+            {
+                analyticsValues.Add(new List<object> { change });
+            }
+            // Clear Analytics tab
+            service.Spreadsheets.Values.Clear(
+                new ClearValuesRequest(),
+                _spreadsheetId,
+                "Analytics!A1:Z500").Execute();
+
+            // Write analytics
+            var analyticsRange = new ValueRange
+            {
+                Values = analyticsValues
+            };
+
+            var analyticsUpdate = service.Spreadsheets.Values.Update(
+                analyticsRange,
+                _spreadsheetId,
+                "Analytics!A1");
+
+            analyticsUpdate.ValueInputOption =
+                SpreadsheetsResource.ValuesResource.UpdateRequest
+                .ValueInputOptionEnum.RAW;
+
+            analyticsUpdate.Execute();
         }
         private void EnsureColumnWidth(List<IList<object>> values, int row, int column)
         {

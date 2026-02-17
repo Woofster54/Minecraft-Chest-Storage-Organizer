@@ -1,0 +1,56 @@
+﻿<Window x:Class="MinecraftStorageApp.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings"
+        Height="500"
+        Width="400"
+        WindowStartupLocation="CenterOwner">
+
+    <ScrollViewer>
+        <StackPanel Margin="20">
+
+            <TextBlock Text="World Name"/>
+            <TextBox Name="WorldNameBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Min X"/>
+            <TextBox Name="MinXBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Max X"/>
+            <TextBox Name="MaxXBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Min Y"/>
+            <TextBox Name="MinYBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Max Y"/>
+            <TextBox Name="MaxYBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Min Z"/>
+            <TextBox Name="MinZBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Max Z"/>
+            <TextBox Name="MaxZBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Google Credential Path"/>
+            <TextBox Name="CredentialPathBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Spreadsheet ID"/>
+            <TextBox Name="SpreadsheetIdBox" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Sheet Name"/>
+            <TextBox Name="SheetNameBox" Margin="0,0,0,20"/>
+            <TextBlock Text="Priority Items (internal names, one per line)"
+           Margin="0,20,0,5"/>
+
+            <TextBox Name="PriorityItemsBox"
+         AcceptsReturn="True"
+         Height="100"
+         VerticalScrollBarVisibility="Auto"/>
+
+            <Button Content="Save"
+                    Height="35"
+                    Click="Save_Click"/>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</Window>
